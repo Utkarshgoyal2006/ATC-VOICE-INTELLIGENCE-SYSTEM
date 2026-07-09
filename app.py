@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from config import Config
 from ai.number_converter import convert_numbers
 from database.db import db
-
+from ai.noise_reduction import reduce_noise
 from database.models import User ,Recording ,Transcript
 
 from auth.routes import register, login, logout
@@ -42,7 +42,6 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
-
 
 app.add_url_rule("/register", "register", register, methods=["GET", "POST"])
 
@@ -143,9 +142,16 @@ def upload():
             file.save(audio_path)
 
             processed_audio = preprocess_audio(audio_path)
-            transcript_text = convert_numbers(transcript_text)
 
-            transcript_text = transcribe_audio(processed_audio)
+            clean_audio = reduce_noise(processed_audio)
+
+            transcript_text, segments = transcribe_audio(clean_audio)
+            for segment in segments:
+
+                print(
+            f"[{segment['start']:.2f} - {segment['end']:.2f}] "
+            f"{segment['text']}"
+            )
             flights = detect_flights(transcript_text)
             recording = Recording(
             filename=filename,
