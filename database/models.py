@@ -40,6 +40,18 @@ class Recording(db.Model):
     db.String(100),
     nullable=True
     )
+    flight_number = db.Column(db.String(20))
+
+    runway = db.Column(db.String(20))
+
+    frequency = db.Column(db.String(20))
+
+    altitude = db.Column(db.String(30))
+
+    emergency = db.Column(
+    db.Boolean,
+    default=False
+    )
     def __repr__(self):
         return f"<Recording {self.filename}>"
     

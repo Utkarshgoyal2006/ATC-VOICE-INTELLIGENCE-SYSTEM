@@ -1,22 +1,35 @@
 from flask import Flask, render_template, request, flash, redirect, url_for
+
+from flask import send_from_directory
+
 from ai.flight_detector import detect_flights
+
 from ai.audio_processor import preprocess_audio
+
 from flask_login import LoginManager, login_required
+
 from ai.whisper_engine import transcribe_audio
+
 from sqlalchemy import or_
 from config import Config
+
 from ai.number_converter import convert_numbers
+
 from database.db import db
 from ai.noise_reduction import reduce_noise
-from database.models import User ,Recording ,Transcript
 
+from database.models import User ,Recording ,Transcript
+from ai.regex_detector import detect_flight_numbers
 from auth.routes import register, login, logout
 from flask import request, flash, redirect
+
 import os
+
 from werkzeug.utils import secure_filename
-import os
+
 from dotenv import load_dotenv
 
+from ai.regex_detector import detect_runway
 load_dotenv()
 
 print(os.getenv("HF_TOKEN"))
@@ -75,6 +88,21 @@ def allowed_file(filename):
     return "." in filename and \
         filename.rsplit(".",1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route("/recording/<int:recording_id>")
+@login_required
+def recording_details(recording_id):
+
+    recording = Recording.query.get_or_404(recording_id)
+
+    transcript = Transcript.query.filter_by(
+        recording_id=recording.id
+    ).first()
+
+    return render_template(
+        "recording_details.html",
+        recording=recording,
+        transcript=transcript
+    )
 @app.route("/transcript/<int:recording_id>")
 @login_required
 def view_transcript(recording_id):
@@ -152,11 +180,24 @@ def upload():
             f"[{segment['start']:.2f} - {segment['end']:.2f}] "
             f"{segment['text']}"
             )
-            flights = detect_flights(transcript_text)
+            flights = detect_flight_numbers(transcript_text)
+
+            flight = None
+
+            if flights:
+                flight = flights[0]
+
+            runway = detect_runway(transcript_text)
+
             recording = Recording(
-            filename=filename,
-            flight_number=", ".join(flights)
-            )
+
+                filename=filename,
+
+                flight_number=flight,
+
+                runway=runway
+)
+
 
             db.session.add(recording)
             db.session.commit()
@@ -176,6 +217,13 @@ def upload():
         flash("Only MP3 and WAV files are allowed.")
 
     return render_template("upload.html")
+@app.route("/audio/<filename>")
+@login_required
+def play_audio(filename):
 
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
 if __name__ == "__main__":
     app.run(debug=True)
