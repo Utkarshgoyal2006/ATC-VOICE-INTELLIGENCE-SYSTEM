@@ -97,3 +97,19 @@ th{
     border-radius:8px;
 
 }
+
+.segment{
+
+    transition:0.3s;
+
+}
+
+.segment.active{
+
+    background:#ffe066;
+
+    border-left:5px solid #ff9800;
+
+    font-weight:bold;
+
+}

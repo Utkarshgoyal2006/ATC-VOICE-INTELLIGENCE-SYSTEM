@@ -104,11 +104,16 @@ def recording_details(recording_id):
     transcript = Transcript.query.filter_by(
         recording_id=recording.id
     ).first()
-
+    segments = TranscriptSegment.query.filter_by(
+        recording_id=recording.id
+    ).order_by(
+        TranscriptSegment.start_time
+    ).all()
     return render_template(
         "recording_details.html",
         recording=recording,
-        transcript=transcript
+        transcript=transcript,
+        segments=segments
     )
 @app.route("/transcript/<int:recording_id>")
 @login_required
