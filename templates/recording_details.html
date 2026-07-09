@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>Recording Details</h1>
+
+    <hr>
+
+    <h3>{{ recording.filename }}</h3>
+
+    <p><strong>Flight Number:</strong> {{ recording.flight_number or "Not Detected" }}</p>
+
+    <p><strong>Runway:</strong> {{ recording.runway or "Not Detected" }}</p>
+
+    <p><strong>Status:</strong> {{ recording.status }}</p>
+
+    <p><strong>Uploaded:</strong> {{ recording.upload_date.strftime("%d-%m-%Y %H:%M") }}</p>
+
+    <hr>
+
+    <h2>Audio</h2>
+
+    <audio controls style="width:100%;">
+
+        <source src="{{ url_for('play_audio', filename=recording.filename) }}">
+
+        Your browser does not support audio.
+
+    </audio>
+
+    <hr>
+
+    <h2>Transcript</h2>
+
+    <div style="background:#f4f4f4; padding:20px; border-radius:8px; color:black;">
+
+        {% if transcript %}
+
+            {{ transcript.transcript }}
+
+        {% else %}
+
+            Transcript not available.
+
+        {% endif %}
+
+    </div>
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">
+
+        <button>← Back to Dashboard</button>
+
+    </a>
+
+</div>
+
+{% endblock %}

@@ -15,10 +15,17 @@ from config import Config
 
 from ai.number_converter import convert_numbers
 
+from flask import send_from_directory
+
 from database.db import db
 from ai.noise_reduction import reduce_noise
 
-from database.models import User ,Recording ,Transcript
+from database.models import (
+    User,
+    Recording,
+    Transcript,
+    TranscriptSegment
+)
 from ai.regex_detector import detect_flight_numbers
 from auth.routes import register, login, logout
 from flask import request, flash, redirect
@@ -169,25 +176,33 @@ def upload():
 
             file.save(audio_path)
 
+            # ----------------------------
+            # Audio Processing
+            # ----------------------------
+
             processed_audio = preprocess_audio(audio_path)
 
             clean_audio = reduce_noise(processed_audio)
 
-            transcript_text, segments = transcribe_audio(clean_audio)
-            for segment in segments:
+            result = transcribe_audio(clean_audio)
 
-                print(
-            f"[{segment['start']:.2f} - {segment['end']:.2f}] "
-            f"{segment['text']}"
-            )
+            transcript_text = result["text"]
+
+            segments = result["segments"]
+
+            # ----------------------------
+            # Detect ATC Information
+            # ----------------------------
+
             flights = detect_flight_numbers(transcript_text)
 
-            flight = None
-
-            if flights:
-                flight = flights[0]
+            flight = flights[0] if flights else None
 
             runway = detect_runway(transcript_text)
+
+            # ----------------------------
+            # Save Recording
+            # ----------------------------
 
             recording = Recording(
 
@@ -196,19 +211,66 @@ def upload():
                 flight_number=flight,
 
                 runway=runway
-)
 
+            )
 
             db.session.add(recording)
+
             db.session.commit()
 
+            # ----------------------------
+            # Save Transcript
+            # ----------------------------
+
             transcript = Transcript(
+
                 recording_id=recording.id,
+
                 transcript=transcript_text
+
             )
 
             db.session.add(transcript)
+
             db.session.commit()
+
+            # ----------------------------
+            # Save Timestamped Segments
+            # ----------------------------
+
+            for segment in segments:
+
+                db.session.add(
+
+                    TranscriptSegment(
+
+                        recording_id=recording.id,
+
+                        start_time=segment["start"],
+
+                        end_time=segment["end"],
+
+                        text=segment["text"].strip()
+
+                    )
+
+                )
+
+            db.session.commit()
+
+            # ----------------------------
+            # Print Segments (Debug)
+            # ----------------------------
+
+            for segment in segments:
+
+                print(
+
+                    f"[{segment['start']:.2f} - {segment['end']:.2f}] "
+
+                    f"{segment['text']}"
+
+                )
 
             flash("File uploaded successfully!")
 
@@ -217,6 +279,7 @@ def upload():
         flash("Only MP3 and WAV files are allowed.")
 
     return render_template("upload.html")
+
 @app.route("/audio/<filename>")
 @login_required
 def play_audio(filename):

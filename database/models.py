@@ -79,5 +79,23 @@ class Transcript(db.Model):
         uselist=False
     )
 
+class TranscriptSegment(db.Model):
+
+    __tablename__ = "transcript_segments"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    recording_id = db.Column(
+        db.Integer,
+        db.ForeignKey("recordings.id"),
+        nullable=False
+    )
+
+    start_time = db.Column(db.Float)
+
+    end_time = db.Column(db.Float)
+
+    text = db.Column(db.Text)
+    
     def __repr__(self):
         return f"<Transcript {self.id}>"
