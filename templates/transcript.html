@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="dashboard">
+
+    <h1>{{ recording.filename }}</h1>
+
+    <div class="history">
+
+        <h2>Transcript</h2>
+
+        <p style="white-space: pre-wrap; line-height:1.8;">
+            {{ transcript.transcript }}
+        </p>
+
+    </div>
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">
+        <button>Back</button>
+    </a>
+
+</div>
+
+{% endblock %}

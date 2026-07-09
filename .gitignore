@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+
+venv/
+
+instance/database.db
+
+uploads/
+
+.env
+
+*.wav
+*.mp3
+
+models/
+
+*.log

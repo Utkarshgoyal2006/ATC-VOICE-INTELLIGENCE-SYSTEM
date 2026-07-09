@@ -1,0 +1,82 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="dashboard">
+    <h1>ATC Voice Intelligence System</h1>
+
+    <div class="cards">
+        <div class="card">
+            <h2>Total Recordings</h2>
+            <p>0</p>
+        </div>
+
+        <div class="card">
+            <h2>Flights Detected</h2>
+            <p>0</p>
+        </div>
+
+        <div class="card">
+            <h2>Emergency Calls</h2>
+            <p>0</p>
+        </div>
+    </div>
+
+    <div class="buttons">
+        <a href="{{ url_for('upload') }}">
+            <button>Upload Recording</button>
+        </a>
+
+        <a href="{{ url_for('search') }}">
+    <button>Search Transcript</button>
+</a>
+
+        <a href="{{ url_for('logout') }}">
+            <button>Logout</button>
+        </a>
+    </div>
+
+    <div class="history">
+        <h2>Recent Recordings</h2>
+
+        <table>
+            <tr>
+                <th>Filename</th>
+                <th>Flight</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+
+            {% if recordings %} {% for recording in recordings %}
+
+            <tr>
+                <td>{{ recording.filename }}</td>
+
+                <td>
+
+                    {{ recording.flight_number if recording.flight_number else "Not Detected" }}
+
+                </td>
+
+                <td>{{ recording.upload_date.strftime("%d-%m-%Y %H:%M") }}</td>
+
+                <td>{{ recording.status }}</td>
+
+                <td>
+                    <a href="{{ url_for('view_transcript', recording_id=recording.id) }}">
+                        <button>View Transcript</button>
+                    </a>
+                </td>
+            </tr>
+
+            {% endfor %} {% else %}
+
+            <tr>
+                <td colspan="3">No recordings uploaded yet.</td>
+            </tr>
+
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}

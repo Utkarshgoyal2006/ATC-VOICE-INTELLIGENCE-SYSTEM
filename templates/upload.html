@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="dashboard">
+
+    <h1>Upload ATC Recording</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <input type="file" name="audio" accept=".mp3,.wav" required>
+
+        <br><br>
+
+        <button type="submit">Upload</button>
+
+    </form>
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">
+        <button>Back to Dashboard</button>
+    </a>
+
+</div>
+
+{% endblock %}

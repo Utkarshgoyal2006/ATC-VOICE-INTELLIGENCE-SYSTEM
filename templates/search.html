@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="dashboard">
+
+    <h1>Search Transcript</h1>
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="keyword"
+            placeholder="Enter keyword..."
+            required
+        >
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+    <br>
+
+    {% if results %}
+
+        {% for result in results %}
+
+        <div class="history">
+
+            <h3>{{ result.recording.filename }}</h3>
+
+            <p>
+
+                {{ result.transcript }}
+
+            </p>
+
+        </div>
+
+        <br>
+
+        {% endfor %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
