@@ -128,7 +128,11 @@
         <a href="{{ url_for('dashboard') }}">
             <button>← Back to Dashboard</button>
         </a>
-
+        <a href="{{ url_for('download_transcript', recording_id=recording.id) }}">
+            <button class="download-btn">
+                Download Report
+            </button>
+        </a>
         <form action="{{ url_for('delete_recording',
                             recording_id=recording.id) }}" method="POST" style="display:inline;">
 

@@ -73,43 +73,55 @@
 
                 {% if recordings %}
 
-                    {% for recording in recordings %}
+                {% for recording in recordings %}
 
-                    <tr>
+                <tr>
 
-                        <td>{{ recording.filename }}</td>
+                    <td>{{ recording.filename }}</td>
 
-                        <td>{{ recording.flight_number or "Not Detected" }}</td>
+                    <td>{{ recording.flight_number or "Not Detected" }}</td>
 
-                        <td>{{ recording.runway or "-" }}</td>
+                    <td>{{ recording.runway or "-" }}</td>
 
-                        <td>{{ recording.upload_date.strftime("%d-%m-%Y %H:%M") }}</td>
+                    <td>{{ recording.upload_date.strftime("%d-%m-%Y %H:%M") }}</td>
 
-                        <td>{{ recording.status }}</td>
+                    <td>{{ recording.status }}</td>
 
-                        <td>
+                    <td>
 
-                            <a href="{{ url_for('recording_details', recording_id=recording.id) }}">
-                                <button>View</button>
-                            </a>
+                        <a href="{{ url_for('recording_details', recording_id=recording.id) }}">
+                            <button>View</button>
+                        </a>
+<!-- 
+                        <a href="{{ url_for('download_transcript', recording_id=recording.id) }}">
+                            <button class="download-btn">
+                                Download
+                            </button>
+                        </a> -->
 
-                        </td>
+                        <!-- <a href="{{ url_for('delete_recording', recording_id=recording.id) }}"
+                            onclick="return confirm('Delete this recording?');">
+                            <button class="delete-btn">
+                                Delete
+                            </button>
+                        </a>
 
-                    </tr>
+                    </td>
+                </tr> -->
 
-                    {% endfor %}
+                {% endfor %}
 
                 {% else %}
 
-                    <tr>
+                <tr>
 
-                        <td colspan="6">
+                    <td colspan="6">
 
-                            No recordings uploaded yet.
+                        No recordings uploaded yet.
 
-                        </td>
+                    </td>
 
-                    </tr>
+                </tr>
 
                 {% endif %}
 

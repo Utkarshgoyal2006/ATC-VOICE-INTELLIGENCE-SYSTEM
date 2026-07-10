@@ -17,8 +17,20 @@ from ai.whisper_engine import transcribe_audio
 
 from ai.atc_corrector import correct_atc_text
 
+from flask import send_file
+import tempfile
+
 from sqlalchemy import or_
+
 from config import Config
+
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+
+from reportlab.lib.styles import getSampleStyleSheet
+
+from flask import send_file
+import tempfile
+
 
 from ai.number_converter import convert_numbers
 
@@ -183,7 +195,99 @@ def search():
         results=results
     )
 
+@app.route("/download/<int:recording_id>")
+@login_required
+def download_transcript(recording_id):
 
+    recording = Recording.query.get_or_404(recording_id)
+
+    transcript = Transcript.query.filter_by(
+        recording_id=recording.id
+    ).first_or_404()
+
+    temp_pdf = tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".pdf"
+    )
+
+    pdf = SimpleDocTemplate(temp_pdf.name)
+
+    styles = getSampleStyleSheet()
+
+    story = []
+
+    story.append(
+        Paragraph(
+            "<b><font size=18>ATC Voice Intelligence System</font></b>",
+            styles["Title"]
+        )
+    )
+
+    story.append(
+        Paragraph("<br/><br/>", styles["Normal"])
+    )
+
+    story.append(
+        Paragraph(
+            f"<b>Recording :</b> {recording.filename}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"<b>Flight :</b> {recording.flight_number or 'Not Detected'}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"<b>Runway :</b> {recording.runway or '-'}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"<b>Status :</b> {recording.status}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"<b>Date :</b> {recording.upload_date.strftime('%d-%m-%Y %H:%M')}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph("<br/><br/>", styles["Normal"])
+    )
+
+    story.append(
+        Paragraph(
+            "<b>Transcript</b>",
+            styles["Heading2"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            transcript.transcript.replace("\n", "<br/>"),
+            styles["Normal"]
+        )
+    )
+
+    pdf.build(story)
+
+    return send_file(
+        temp_pdf.name,
+        as_attachment=True,
+        download_name=f"{recording.filename}_Report.pdf",
+        mimetype="application/pdf"
+    )
 @app.route("/delete/<int:recording_id>", methods=["POST"])
 @login_required
 def delete_recording(recording_id):
@@ -268,7 +372,12 @@ def upload():
                 # Whisper Transcription
                 # -------------------------
 
-                result = transcribe_audio(clean_audio)
+                result = transcribe_audio(clean_audio) 
+
+                print("=" * 50)
+                print("Whisper Input File:")
+                print(clean_audio)
+                print("=" * 50)
 
                 transcript_text = result["text"]
 
