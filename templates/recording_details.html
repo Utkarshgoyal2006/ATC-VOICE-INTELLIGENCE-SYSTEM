@@ -91,23 +91,21 @@
 
         {% for segment in segments %}
 
-        <div class="segment" id="segment{{ loop.index }}" data-start="{{ segment.start_time }}"
-            data-end="{{ segment.end_time }}" style="
-                    padding:10px;
-                    cursor:pointer;
-                    border-bottom:1px solid #ddd;
-                ">
+        <div class="segment" id="segment{{ segment.id }}" data-start="{{ segment.start_time }}"
+            data-end="{{ segment.end_time }}">
 
             <div class="segment-header">
 
-                <span class="timestamp">
+                <span
+    class="timestamp"
+    data-start="{{ segment.start_time }}">
 
-                    {{ "%02d:%02d"|format(
-                    (segment.start_time//60)|int,
-                    (segment.start_time%60)|int
-                    ) }}
+    ▶ {{ "%02d:%02d"|format(
+        (segment.start_time//60)|int,
+        (segment.start_time%60)|int
+    ) }}
 
-                </span>
+</span>
 
                 <span class="speaker">
 
@@ -117,16 +115,40 @@
 
             </div>
 
-            <div class="segment-text">
+            <!-- Normal Text -->
 
-                {{ segment.text }}
+            <div class="segment-text" id="text{{ segment.id }}">
+
+                {% if segment.edited_text %}
+
+                {{ segment.edited_text }}
+
+                {% else %}
+
+                {{ segment.original_text }}
+
+                {% endif %}
+
+            </div>
+
+            <!-- Hidden Text Area -->
+
+            <textarea id="editor{{ segment.id }}" class="editor"
+                style="display:none;width:100%;height:90px;"></textarea>
+
+            <div class="segment-actions">
+
+                <button class="edit-btn" onclick="enableEdit(event, '{{ segment.id }}')">
+
+                    ✏ Edit
+
+                </button>
 
             </div>
 
         </div>
 
         {% endfor %}
-
         {% else %}
 
         <p>No transcript available.</p>
@@ -166,49 +188,80 @@
 
 <script>
 
-    const audio = document.getElementById("audioPlayer");
+const audio = document.getElementById("audioPlayer");
 
-    const segments = document.querySelectorAll(".segment");
+const segments = document.querySelectorAll(".segment");
+
+
+// ---------------------------
+// Edit Transcript
+// ---------------------------
+
+function enableEdit(event, id){
+
+    event.stopPropagation();
+
+    const text = document.getElementById("text" + id);
+
+    const editor = document.getElementById("editor" + id);
+
+    editor.value = text.innerText.trim();
+
+    text.style.display = "none";
+
+    editor.style.display = "block";
+
+}
+
+
+// ---------------------------
+// Click Timestamp → Play Audio
+// ---------------------------
+
+document.querySelectorAll(".timestamp").forEach(timestamp => {
+
+    timestamp.addEventListener("click", function(event){
+
+        event.stopPropagation();
+
+        audio.currentTime = parseFloat(this.dataset.start);
+
+        audio.play();
+
+    });
+
+});
+
+
+// ---------------------------
+// Highlight Current Segment
+// ---------------------------
+
+audio.addEventListener("timeupdate", () => {
+
+    const current = audio.currentTime;
 
     segments.forEach(segment => {
 
-        segment.addEventListener("click", () => {
+        const start = parseFloat(segment.dataset.start);
 
-            audio.currentTime = parseFloat(segment.dataset.start);
+        const end = parseFloat(segment.dataset.end);
 
-            audio.play();
+        if(current >= start && current <= end){
 
-        });
+            segment.classList.add("active");
 
-    });
+        }
 
-    audio.addEventListener("timeupdate", () => {
+        else{
 
-        const current = audio.currentTime;
+            segment.classList.remove("active");
 
-        segments.forEach(segment => {
-
-            const start = parseFloat(segment.dataset.start);
-
-            const end = parseFloat(segment.dataset.end);
-
-            if (current >= start && current <= end) {
-
-                segment.classList.add("active");
-
-
-            }
-
-            else {
-
-                segment.classList.remove("active");
-
-            }
-
-        });
+        }
 
     });
+
+});
 
 </script>
-
 {% endblock %}

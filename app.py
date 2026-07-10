@@ -478,17 +478,17 @@ def upload():
 
                     transcript_segment = TranscriptSegment(
 
-                        recording_id=recording.id,
+    recording_id=recording.id,
 
-                        start_time=segment["start"],
+    start_time=segment["start"],
 
-                        end_time=segment["end"],
+    end_time=segment["end"],
 
-                        speaker="Unknown",
+    speaker="Unknown",
 
-                        text=corrected_text
+    original_text=corrected_text
 
-                    )
+)
 
                     db.session.add(
                         transcript_segment

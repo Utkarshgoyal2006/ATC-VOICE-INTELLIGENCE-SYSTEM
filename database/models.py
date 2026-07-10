@@ -101,11 +101,25 @@ class TranscriptSegment(db.Model):
         default="Unknown"
     )
 
-    text = db.Column(
-        db.Text,
-        nullable=False
-    )
+    original_text = db.Column(
+    db.Text,
+    nullable=False
+)
 
+    edited_text = db.Column(
+    db.Text,
+    nullable=True
+)
+
+    is_edited = db.Column(
+    db.Boolean,
+    default=False
+)
+
+    edited_at = db.Column(
+    db.DateTime,
+    nullable=True
+)
     recording = db.relationship(
         "Recording",
         backref="segments"
