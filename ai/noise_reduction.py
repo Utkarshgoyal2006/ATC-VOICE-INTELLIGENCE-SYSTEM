@@ -1,56 +1,35 @@
 import os
 import librosa
-import noisereduce as nr
 import soundfile as sf
-from scipy.signal import butter, filtfilt
+import noisereduce as nr
 
 
-def bandpass_filter(audio, sample_rate, lowcut=300, highcut=3400, order=5):
-    nyquist = 0.5 * sample_rate
+def reduce_noise(audio_path):
 
-    low = lowcut / nyquist
-    high = highcut / nyquist
+    signal, sr = librosa.load(audio_path, sr=None)
 
-    b, a = butter(order, [low, high], btype="band")
+    reduced = nr.reduce_noise(
 
-    filtered_audio = filtfilt(b, a, audio)
+        y=signal,
 
-    return filtered_audio
+        sr=sr,
 
-
-def reduce_noise(input_file):
-
-    # Load audio
-    audio, sample_rate = librosa.load(
-        input_file,
-        sr=16000,
-        mono=True
-    )
-
-    # Normalize volume
-    audio = librosa.util.normalize(audio)
-
-    # Band-pass filter (ATC Voice Frequency)
-    audio = bandpass_filter(audio, sample_rate)
-
-    # Noise Reduction
-    cleaned_audio = nr.reduce_noise(
-        y=audio,
-        sr=sample_rate,
         stationary=False,
+
         prop_decrease=0.9
+
     )
 
-    # Output filename
-    filename = os.path.splitext(input_file)[0]
+    output_path = audio_path.replace(".wav", "_clean.wav")
 
-    output_file = filename + "_clean.wav"
-
-    # Save cleaned audio
     sf.write(
-        output_file,
-        cleaned_audio,
-        sample_rate
+
+        output_path,
+
+        reduced,
+
+        sr
+
     )
 
-    return output_file
+    return output_path

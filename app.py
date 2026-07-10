@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, flash, redirect, url_for
 
+
 from ai.statistics import calculate_statistics
 
 from flask import send_from_directory
@@ -182,6 +183,47 @@ def search():
         results=results
     )
 
+
+@app.route("/delete/<int:recording_id>", methods=["POST"])
+@login_required
+def delete_recording(recording_id):
+
+    recording = Recording.query.get_or_404(recording_id)
+
+    transcript = Transcript.query.filter_by(
+        recording_id=recording.id
+    ).first()
+
+    segments = TranscriptSegment.query.filter_by(
+        recording_id=recording.id
+    ).all()
+
+    # Delete transcript segments
+    for segment in segments:
+        db.session.delete(segment)
+
+    # Delete transcript
+    if transcript:
+        db.session.delete(transcript)
+
+    # Delete audio file
+    audio_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        recording.filename
+    )
+
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
+
+    db.session.delete(recording)
+
+    db.session.commit()
+
+    flash("Recording deleted successfully.")
+
+    return redirect(url_for("dashboard"))
+
+
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
@@ -209,115 +251,154 @@ def upload():
 
             file.save(audio_path)
 
-            # ----------------------------
-            # Audio Processing
-            # ----------------------------
+            processed_audio = None
+            clean_audio = None
 
-            processed_audio = preprocess_audio(audio_path)
+            try:
 
-            clean_audio = reduce_noise(processed_audio)
+                # -------------------------
+                # Audio Processing
+                # -------------------------
 
-            result = transcribe_audio(clean_audio)
+                processed_audio = preprocess_audio(audio_path)
 
-            transcript_text = result["text"]
-            transcript_text = correct_atc_text(transcript_text)
+                clean_audio = reduce_noise(processed_audio)
 
-            transcript_text = convert_numbers_to_words(transcript_text)
-            
-            duration = result["segments"][-1]["end"]
+                # -------------------------
+                # Whisper Transcription
+                # -------------------------
 
-            stats = calculate_statistics(
-            transcript_text,
-            duration
-)
+                result = transcribe_audio(clean_audio)
 
-            segments = result["segments"]
+                transcript_text = result["text"]
 
-            # ----------------------------
-            # Detect ATC Information
-            # ----------------------------
+                transcript_text = correct_atc_text(transcript_text)
 
-            flights = detect_flight_numbers(transcript_text)
+                transcript_text = convert_numbers_to_words(transcript_text)
 
-            flight = flights[0] if flights else None
+                segments = result["segments"]
 
-            runway = detect_runway(transcript_text)
+                duration = segments[-1]["end"] if segments else 0
 
-            # ----------------------------
-            # Save Recording
-            # ----------------------------
+                stats = calculate_statistics(
+                    transcript_text,
+                    duration
+                )
 
-            recording = Recording(
+                # -------------------------
+                # Flight Detection
+                # -------------------------
 
-                filename=filename,
+                flights = detect_flight_numbers(transcript_text)
 
-                flight_number=flight,
+                flight = flights[0] if flights else None
 
-                runway=runway
+                runway = detect_runway(transcript_text)
 
-            )
+                # -------------------------
+                # Save Recording
+                # -------------------------
 
-            db.session.add(recording)
+                recording = Recording(
 
-            db.session.commit()
+                    filename=filename,
 
-            # ----------------------------
-            # Save Transcript
-            # ----------------------------
+                    flight_number=flight,
 
-            transcript = Transcript(
+                    runway=runway
 
-                recording_id=recording.id,
+                )
 
-                transcript=transcript_text
+                db.session.add(recording)
 
-            )
+                db.session.commit()
 
-            db.session.add(transcript)
+                # -------------------------
+                # Save Transcript
+                # -------------------------
 
-            db.session.commit()
+                transcript = Transcript(
 
-            # ----------------------------
-            # Save Timestamped Segments
-            # ----------------------------
+                    recording_id=recording.id,
 
-            for segment in segments:
+                    transcript=transcript_text
 
-                db.session.add(
+                )
 
-                    TranscriptSegment(
+                db.session.add(transcript)
 
-                        recording_id=recording.id,
+                # -------------------------
+                # Save Timestamped Segments
+                # -------------------------
 
-                        start_time=segment["start"],
+                for segment in segments:
 
-                        end_time=segment["end"],
+                    corrected_segment = correct_atc_text(
+                        segment["text"]
+                    )
 
-                        text=segment["text"].strip()
+                    corrected_segment = convert_numbers_to_words(
+                        corrected_segment
+                    )
+
+                    db.session.add(
+
+                        TranscriptSegment(
+
+                            recording_id=recording.id,
+
+                            start_time=segment["start"],
+
+                            end_time=segment["end"],
+
+                            text=corrected_segment
+
+                        )
 
                     )
 
-                )
+                db.session.commit()
 
-            db.session.commit()
+                # -------------------------
+                # Debug Output
+                # -------------------------
 
-            # ----------------------------
-            # Print Segments (Debug)
-            # ----------------------------
+                print("\nFinal Transcript\n")
 
-            for segment in segments:
+                print(transcript_text)
 
-                print(
+                print("\nTimestamped Segments\n")
 
-                    f"[{segment['start']:.2f} - {segment['end']:.2f}] "
+                for segment in segments:
 
-                    f"{segment['text']}"
+                    corrected_segment = correct_atc_text(
+                        segment["text"]
+                    )
 
-                )
+                    corrected_segment = convert_numbers_to_words(
+                        corrected_segment
+                    )
 
-            flash("File uploaded successfully!")
+                    print(
+                        f"[{segment['start']:.2f} - {segment['end']:.2f}] "
+                        f"{corrected_segment}"
+                    )
 
-            return redirect(url_for("dashboard"))
+                flash("File uploaded successfully!")
+
+                return redirect(url_for("dashboard"))
+
+            finally:
+
+                # -------------------------
+                # Delete Temporary Files
+                # -------------------------
+
+                if processed_audio and os.path.exists(processed_audio):
+                    os.remove(processed_audio)
+
+                if clean_audio and os.path.exists(clean_audio):
+                    os.remove(clean_audio)
 
         flash("Only MP3 and WAV files are allowed.")
 

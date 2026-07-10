@@ -36,7 +36,15 @@ def convert_numbers_to_words(text):
 
     pattern = r"\d+(\.\d+)?"
 
+
+
     def replace(match):
         return convert_number(match.group())
 
     return re.sub(pattern, replace, text)
+
+if __name__ == "__main__":
+
+    text = "Descend to 3300 feet. Contact tower on 118.3. QNH 1013."
+
+    print(convert_numbers_to_words(text))
