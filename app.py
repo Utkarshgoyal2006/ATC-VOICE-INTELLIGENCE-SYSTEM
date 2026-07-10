@@ -1,14 +1,20 @@
 from flask import Flask, render_template, request, flash, redirect, url_for
 
+from ai.statistics import calculate_statistics
+
 from flask import send_from_directory
 
 from ai.flight_detector import detect_flights
+
+from ai.number_to_words import convert_numbers_to_words
 
 from ai.audio_processor import preprocess_audio
 
 from flask_login import LoginManager, login_required
 
 from ai.whisper_engine import transcribe_audio
+
+from ai.atc_corrector import correct_atc_text
 
 from sqlalchemy import or_
 from config import Config
@@ -104,16 +110,38 @@ def recording_details(recording_id):
     transcript = Transcript.query.filter_by(
         recording_id=recording.id
     ).first()
+
     segments = TranscriptSegment.query.filter_by(
         recording_id=recording.id
     ).order_by(
         TranscriptSegment.start_time
     ).all()
+
+    if segments:
+
+        duration = segments[-1].end_time
+
+        stats = calculate_statistics(
+            transcript.transcript,
+            duration
+        )
+
+    else:
+
+        stats = None
+
     return render_template(
+
         "recording_details.html",
+
         recording=recording,
+
         transcript=transcript,
-        segments=segments
+
+        segments=segments,
+
+        stats=stats
+
     )
 @app.route("/transcript/<int:recording_id>")
 @login_required
@@ -192,6 +220,16 @@ def upload():
             result = transcribe_audio(clean_audio)
 
             transcript_text = result["text"]
+            transcript_text = correct_atc_text(transcript_text)
+
+            transcript_text = convert_numbers_to_words(transcript_text)
+            
+            duration = result["segments"][-1]["end"]
+
+            stats = calculate_statistics(
+            transcript_text,
+            duration
+)
 
             segments = result["segments"]
 

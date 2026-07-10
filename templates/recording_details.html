@@ -29,6 +29,52 @@
         Your browser does not support audio.
 
     </audio>
+    <hr>
+
+    <h2>ATC Communication Statistics</h2>
+
+    {% if stats %}
+
+    <table border="1" cellpadding="8">
+
+        <tr>
+            <td><strong>Total Words</strong></td>
+            <td>{{ stats.total_words }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Flight Numbers</strong></td>
+            <td>{{ stats.flight_count }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Runways</strong></td>
+            <td>{{ stats.runway_count }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Frequencies</strong></td>
+            <td>{{ stats.frequency_count }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Altitudes</strong></td>
+            <td>{{ stats.altitude_count }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Emergency Calls</strong></td>
+            <td>{{ stats.emergency_count }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Words / Minute</strong></td>
+            <td>{{ stats.words_per_minute }}</td>
+        </tr>
+
+    </table>
+
+    {% endif %}
 
     <hr>
 
@@ -139,4 +185,4 @@
 
 </script>
 
-{% endblock %}
+{% endblock %} 
