@@ -79,6 +79,7 @@ class Transcript(db.Model):
         uselist=False
     )
 
+
 class TranscriptSegment(db.Model):
 
     __tablename__ = "transcript_segments"
@@ -95,7 +96,20 @@ class TranscriptSegment(db.Model):
 
     end_time = db.Column(db.Float)
 
-    text = db.Column(db.Text)
-    
+    speaker = db.Column(
+        db.String(50),
+        default="Unknown"
+    )
+
+    text = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    recording = db.relationship(
+        "Recording",
+        backref="segments"
+    )
+
     def __repr__(self):
-        return f"<Transcript {self.id}>"
+        return f"<Segment {self.id}>"

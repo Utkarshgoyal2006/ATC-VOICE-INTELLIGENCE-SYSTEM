@@ -98,16 +98,30 @@
                     border-bottom:1px solid #ddd;
                 ">
 
-            <strong>
+            <div class="segment-header">
 
-                {{ "%02d:%02d"|format(
-                (segment.start_time//60)|int,
-                (segment.start_time%60)|int
-                ) }}
+                <span class="timestamp">
 
-            </strong>
+                    {{ "%02d:%02d"|format(
+                    (segment.start_time//60)|int,
+                    (segment.start_time%60)|int
+                    ) }}
 
-            {{ segment.text }}
+                </span>
+
+                <span class="speaker">
+
+                    {{ segment.speaker }}
+
+                </span>
+
+            </div>
+
+            <div class="segment-text">
+
+                {{ segment.text }}
+
+            </div>
 
         </div>
 
@@ -182,13 +196,6 @@
 
                 segment.classList.add("active");
 
-                segment.scrollIntoView({
-
-                    behavior: "smooth",
-
-                    block: "center"
-
-                });
 
             }
 

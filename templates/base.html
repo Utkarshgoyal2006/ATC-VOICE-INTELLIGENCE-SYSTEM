@@ -9,7 +9,15 @@
     href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
+<header class="top-header">
 
+    <img
+        src="{{ url_for('static', filename='images/aai_logo.jpg') }}"
+        alt="AAI Logo"
+        class="aai-logo"
+    >
+
+</header>
 <body>
 
 {% with messages = get_flashed_messages() %}
